@@ -2,6 +2,7 @@ from flask import Flask, request, render_template, jsonify,redirect, url_for, fl
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from flask import make_response
+from sqlalchemy.exc import OperationalError
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
@@ -729,53 +730,81 @@ def import_data():
 
     try:
         xls = pd.read_excel(file, sheet_name=None)
+        
         with app.app_context():
+            # Use session handling within context
+            session = db.session
+
+            def insert_with_retry(query_func, *args, max_retries=3, delay=1):
+                """Function to retry inserts in case of database locking."""
+                for _ in range(max_retries):
+                    try:
+                        return query_func(*args)
+                    except OperationalError as e:
+                        if 'database is locked' in str(e):
+                            time.sleep(delay)
+                            continue
+                        else:
+                            raise  # Reraise if it's another type of error
+                raise Exception("Max retries exceeded.")
+
             # Prefix
             if 'prefix' in xls:
                 for _, row in xls['prefix'].iterrows():
-                    prefix = Prefix.query.filter_by(prefix=row['prefix']).first()
-                    if not prefix:
-                        prefix = Prefix(prefix=row['prefix'])
-                        db.session.add(prefix)
-                    prefix.prefix_name = row['prefix_name']
+                    def insert_prefix(row):
+                        prefix = Prefix.query.filter_by(prefix=row['prefix']).first()
+                        if not prefix:
+                            prefix = Prefix(prefix=row['prefix'])
+                            session.add(prefix)
+                        prefix.prefix_name = row['prefix_name']
+                    insert_with_retry(insert_prefix, row)
 
             # Members
             if 'members' in xls:
                 for _, row in xls['members'].iterrows():
-                    member = Member.query.filter_by(member_id=row['member_id']).first()
-                    if not member:
-                        member = Member(member_id=row['member_id'])
-                        db.session.add(member)
-                    member.member_name = row['member_name']
-                    member.member_email = row['member_email']
-                    member.member_address = row['member_address']
-                    member.member_class = row['member_class']
-                    member.member_gender = row['member_gender']
-                    member.member_phone_number = str(row['member_phone_number'])
-                    member.member_dob = pd.to_datetime(row['member_dob']).date()
-                    member.member_date_created = pd.to_datetime(row['member_date_created'])
+                    def insert_member(row):
+                        member = Member.query.filter_by(member_id=row['member_id']).first()
+                        if not member:
+                            member = Member(member_id=row['member_id'])
+                            session.add(member)
+                        member.member_name = row['member_name']
+                        member.member_email = row['member_email']
+                        member.member_address = row['member_address']
+                        member.member_class = row['member_class']
+                        member.member_gender = row['member_gender']
+                        member.member_phone_number = str(row['member_phone_number'])
+                        member.member_dob = pd.to_datetime(row['member_dob']).date()
+                        member.member_date_created = pd.to_datetime(row['member_date_created'])
+                    insert_with_retry(insert_member, row)
 
             # Books
             if 'books' in xls:
                 for _, row in xls['books'].iterrows():
-                    prefix_exists = Prefix.query.filter_by(prefix=row["prefix_id"]).first()
-                    if not prefix_exists:
-                        continue
-                    book = Book.query.filter_by(book_id=row['book_id']).first()
-                    if not book:
-                        book = Book(book_id=row['book_id'])
-                        db.session.add(book)
-                    book.title = row['title']
-                    book.author = row['author']
-                    book.category = row['category']
-                    book.language = row['language']
-                    book.page = row['page']
-                    book.price = row['price']
-                    book.prefix_id = row['prefix_id']
+                    def insert_book(row):
+                        prefix_exists = Prefix.query.filter_by(prefix=row["prefix_id"]).first()
+                        if not prefix_exists:
+                            return
+                        book = Book.query.filter_by(book_id=row['book_id']).first()
+                        if not book:
+                            book = Book(book_id=row['book_id'])
+                            session.add(book)
+                        book.title = row['title']
+                        book.author = row['author']
+                        book.category = row['category']
+                        book.language = row['language']
+                        book.page = row['page']
+                        book.price = row['price']
+                        book.prefix_id = row['prefix_id']
+                    insert_with_retry(insert_book, row)
 
-            db.session.commit()
+            # Commit the session after all data is processed
+            session.commit()
+
         return jsonify({'success': True})
+
     except Exception as e:
+        # In case of an exception, ensure the session is rolled back
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500
 if __name__ == '__main__':
     app.run(debug=True)
