@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librarian Dashboard - Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-green-600 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">Library Management System</h1>
+            <div class="space-x-4">
+                <a href="{{ url_for('librariandashboard') }}" class="hover:text-green-200">Dashboard</a>
+                <a href="{{ url_for('additem') }}" class="hover:text-green-200">Add Books</a>
+                <a href="{{ url_for('member_registration') }}" class="hover:text-green-200">Add Member</a>
+                <a href="{{ url_for('viewmember') }}" class="hover:text-green-200">View Members</a>
+                <a href="{{ url_for('transaction') }}" class="hover:text-green-200">Issue/return</a>
+                <a href="{{ url_for('catlog') }}" class="hover:text-green-200">Catlog</a>
+                <a href="{{ url_for('data_manage') }}" class="hover:text-green-200">Data Management</a>                              
+                <a href="{{ url_for('setting') }}" class="hover:text-green-200">setting</a>
+                
+                <a href="{{ url_for('logout') }}" class="hover:text-green-200">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-6">
+        <!-- Change Password Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6" id="changePasswordSection">
+            <h2 class="text-2xl font-semibold mb-4 text-green-600">Change Password</h2>
+            <form id="changePasswordForm" class="space-y-4">
+                <div>
+                    <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                    <input type="password" id="currentPassword" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+                <div>
+                    <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                    <input type="password" id="newPassword" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+                <div>
+                    <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+
+                <button type="submit" 
+                    class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    Change Password
+                </button>
+            </form>
+        </div>
+
+        <!-- Add Book ID Prefix Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6" id="addBookPrefixSection">
+            <h2 class="text-2xl font-semibold mb-4 text-green-600">Add Book ID Prefix</h2>
+           
+            <form id="addPrefixForm" class="space-y-4">
+                <div>
+                    <label for="bookIdPrefix" class="block text-sm font-medium text-gray-700 mb-1">Book ID Prefix</label>
+                    <input type="text" id="bookIdPrefix" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" style="text-transform: uppercase;">
+                    <span id="prefixError" class="text-red-500 text-sm"></span> <!-- Error message here -->
+                  </div>
+                  
+                  
+                <div>
+                    <label for="prefixFullName" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <input type="text" id="prefixFullName" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+        
+                <button type="submit" id="prefixfile"
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    Add Prefix
+                </button>
+            </form>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6" id="getfine">
+            <h2 class="text-2xl font-semibold mb-4 text-green-600">Fine Per Day</h2>
+            <form id="getfine" class="space-y-4">
+                <div>
+                    <label for="bookfine" class="block text-sm font-medium text-gray-700 mb-1">Fine</label>
+                    <input type="text" id="finevalue" required   placeholder="Current Fine: {{ fine_value }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"> <!-- Error message here -->
+                </div>
+              
+                <button type="submit" 
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    Add Fine
+                </button>
+            </form>
+        </div>
+              <div class="bg-white rounded-lg shadow-md p-6 mb-6" id="getloan">
+            <h2 class="text-2xl font-semibold mb-4 text-green-600">Loan Limit</h2>
+            <form id="loanlimit" class="space-y-4">
+                <div>
+                    <label for="bookIdPrefix" class="block text-sm font-medium text-gray-700 mb-1">Limit</label>
+                    <input type="text" id="loan" required placeholder="Current loan: {{ loan_value }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"><!-- Error message here -->
+                </div>
+              
+                <button type="submit" 
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    Add Limit
+                </button>
+            </form>
+        </div>
+        <script>
+            document.getElementById("bookIdPrefix").addEventListener("blur", function() {
+                const prefix = document.getElementById("bookIdPrefix").value;
+                
+                if (prefix) {
+                    fetch(`/check_prefix/${prefix}`, { method: 'GET' })
+                        .then(response => response.json())
+                        .then(data => {
+                            const errorSpan = document.getElementById("prefixError");
+                            if (data.exists) {
+                                errorSpan.textContent = "Prefix already exists!";
+                            } else {
+                                errorSpan.textContent = "Prefix available";
+                                errorSpan.classList.remove("text-red-500");
+                                errorSpan.classList.add("text-green-500");
+                            }
+                        })
+                        .catch(error => console.error('Error checking prefix:', error));
+                }
+            });
+        
+            document.getElementById("addPrefixForm").addEventListener("submit", function(e) {
+                e.preventDefault();
+                const prefix = document.getElementById("bookIdPrefix").value;
+                const prefixFullName = document.getElementById("prefixFullName").value;
+                
+                fetch("/addprefix", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ prefix, prefix_full_name: prefixFullName })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Prefix added successfully");
+                        window.location.reload();  // Reload page or redirect as needed
+                    } else {
+                        alert("Error adding prefix: " + data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+
+            document.getElementById("getfine").addEventListener("submit", function(e) {
+    e.preventDefault(); // Prevent form from refreshing the page
+
+    let fine = document.getElementById("finevalue").value;
+
+    fetch("/update_fine", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fine: fine }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Fine updated successfully!");
+        } else {
+            alert("Error: " + data.error);
+        }
+    })
+    .catch(error => console.error("Error:", error));
+});
+
+document.getElementById("getloan").addEventListener("submit", function(e) {
+    e.preventDefault(); // Prevent form from refreshing the page
+
+    let loan = document.getElementById("loan").value;
+
+    fetch("/update_loan", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ loan:loan}),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("loan updated successfully!");
+        } else {
+            alert("Error: " + data.error);
+        }
+    })
+    .catch(error => console.error("Error:", error));
+});
+
+document.getElementById("changePasswordForm").addEventListener("submit", function(e) {
+    e.preventDefault();  // Prevent form from submitting normally
+
+    const currentPassword = document.getElementById("currentPassword").value;
+    const newPassword = document.getElementById("newPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+
+    // Check if the new password matches the confirmation password
+    if (newPassword !== confirmPassword) {
+        alert("New passwords do not match.");
+        return;
+    }
+
+    fetch("/change_password", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword
+    })
+})
+.then(response => response.json())
+.then(data => {
+    if (data.success) {
+        alert(data.message);  // Show personalized success message
+    } else {
+        alert("Error: " + data.error);
+    }
+})
+.catch(error => console.error("Error:", error));
+
+});
+
+        </script>
+        
+    <script src="../js/auth.js"></script>
+    <script src="../js/librarian.js"></script>
+    <script src="../js/settings.js"></script>
+</body>
+</html>

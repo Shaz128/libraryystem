@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librarian Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-green-600 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">Library Management System</h1>
+            <div class="space-x-4">
+                <a href="{{ url_for('librariandashboard') }}" class="hover:text-green-200">Dashboard</a>
+                <a href="{{ url_for('additem') }}" class="hover:text-green-200">Add Books</a>
+                <a href="{{ url_for('member_registration') }}" class="hover:text-green-200">Add Member</a>
+                <a href="{{ url_for('viewmember') }}" class="hover:text-green-200">View Members</a>
+                <a href="{{ url_for('transaction') }}" class="hover:text-green-200">Issue/return</a>
+                <a href="{{ url_for('catlog') }}" class="hover:text-green-200">Catlog</a>
+                <a href="{{ url_for('data_manage') }}" class="hover:text-green-200">Data Management</a>                   
+                <a href="{{ url_for('setting') }}" class="hover:text-green-200">setting</a>
+                <a href="{{ url_for('logout') }}" class="hover:text-green-200">Logout</a>
+            </div>
+        </div>
+    </nav>
+    <div>
+        <!-- Book Entry Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6" id="bookEntrySection">
+            <h2 class="text-2xl font-semibold mb-4 text-green-600">Add New Book</h2>
+            <form id="bookEntryForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="bookIdPrefix" class="block text-sm font-medium text-gray-700 mb-1">Book ID Prefix</label>
+                        <select id="bookIdPrefix" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                            <option value="" disabled selected>Select a prefix</option> <!-- Default blank option -->
+                            {% for prefix in prefixes %}
+                                <option value="{{ prefix }}">{{ prefix }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="bookId" class="block text-sm font-medium text-gray-700 mb-1">Book ID</label>
+                        <input type="text" id="bookId" readonly 
+                            class="w-full px-4 py-2 border border-gray-300 bg-gray-200 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="bookTitle" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                    <input type="text" id="bookTitle" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="bookAuthor" class="block text-sm font-medium text-gray-700 mb-1">Author</label>
+                        <input type="text" id="bookAuthor" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label for="bookCategory" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <div id="categoriesDiv">
+                            <!-- Categories will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="bookQuantity" class="block text-sm font-medium text-gray-700 mb-1">Pages</label>
+                        <input type="number" id="bookQuantity" min="1" value="1" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    </div>
+
+                    <div>
+                        <label for="bookLang" class="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                        <!-- Dropdown for Language Selection -->
+                        <select id="language" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                            <option value="" disabled selected>Select Language</option>
+                            <option value="English">English</option>
+                            <option value="Urdu">Urdu</option>
+                            <option value="Gujarati">Gujarati</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                        <input type="number" id="price"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    Add Book
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("bookIdPrefix").addEventListener("change", function() {
+            let selectedPrefix = this.value;
+            // Fetch the categories based on the selected prefix
+            fetch(`/get_categories_by_prefix/${selectedPrefix}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Categories:", data.categories);
+
+                    // Get the div where the categories will be added
+                    const categoriesDiv = document.getElementById("categoriesDiv");
+                    categoriesDiv.innerHTML = "";  // Clear previous categories
+
+                    // Loop through the categories and create label elements
+                    data.categories.forEach(category => {
+                        const label = document.createElement("label");
+                        label.textContent = category;  // Set the category text
+                        categoriesDiv.appendChild(label);  // Append label to div
+                    });
+                })
+                .catch(error => console.error("Error fetching categories:", error));
+
+            // Fetch the next available book ID based on the selected prefix
+            fetch(`/get_next_book_id/${selectedPrefix}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("bookId").value = data.next_book_id;
+                })
+                .catch(error => console.error("Error fetching book ID:", error));
+        });
+
+        document.getElementById("bookEntryForm").addEventListener("submit", function(event) {
+            event.preventDefault();  // Prevent form submission
+
+            let bookData = {
+                book_id: document.getElementById("bookId").value,
+                title: document.getElementById("bookTitle").value,
+                author: document.getElementById("bookAuthor").value,
+                category: document.getElementById("categoriesDiv").querySelector("label").innerText,
+                page: document.getElementById("bookQuantity").value,
+                language: document.getElementById("language").value,
+                price: document.getElementById("price").value,
+                prefix_id: document.getElementById("bookIdPrefix").value
+            };
+            console.log(bookData)
+            fetch("/add_book", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(bookData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Error: " + data.error);
+                } else {
+                    alert("Book added successfully!");
+                    document.getElementById("bookEntryForm").reset();  // Reset form
+                }
+            })
+            .catch(error => console.error("Error adding book:", error));
+        });
+    </script>
+    
+    <script src="../js/auth.js"></script>
+    <script src="../js/librarian.js"></script>
+</body>
+</html>

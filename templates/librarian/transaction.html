@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librarian Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-green-600 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">Library Management System</h1>
+            <div class="space-x-4">
+                <a href="{{ url_for('librariandashboard') }}" class="hover:text-green-200">Dashboard</a>
+                <a href="{{ url_for('additem') }}" class="hover:text-green-200">Add Books</a>
+                <a href="{{ url_for('member_registration') }}" class="hover:text-green-200">Add Member</a>
+                <a href="{{ url_for('viewmember') }}" class="hover:text-green-200">View Members</a>
+                <a href="{{ url_for('transaction') }}" class="hover:text-green-200">Issue/return</a>
+                <a href="{{ url_for('catlog') }}" class="hover:text-green-200">Catlog</a>
+                <a href="{{ url_for('data_manage') }}" class="hover:text-green-200">Data Management</a>                   
+                <a href="{{ url_for('setting') }}" class="hover:text-green-200">setting</a>
+                
+                <a href="{{ url_for('logout') }}" class="hover:text-green-200">Logout</a>
+            </div>
+        </div>
+    </nav>
+    <div>
+
+           <!-- Issue/Return Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6" id="transactionSection">
+            <h2 class="text-2xl font-semibold mb-4 text-green-600">Book Transactions</h2>
+            <form id="transactionForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="transactionType" class="block text-sm font-medium text-gray-700 mb-1">Transaction Type</label>
+                        <select id="transactionType" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                            <option value="issue">Issue Book</option>
+                            <option value="return">Return Book</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="memberId" class="block text-sm font-medium text-gray-700 mb-1">Member ID</label>
+                        <input type="text" id="memberId" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="bookIdTransaction" class="block text-sm font-medium text-gray-700 mb-1">Book ID</label>
+                    <input type="text" id="bookIdTransaction" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+                <div>
+                    <label for="extendPeriod" class="flex items-center space-x-2 text-gray-700">
+                        <input type="checkbox" id="extendPeriod" class="form-checkbox h-4 w-4 text-green-500">
+                        <span>Extend Issue Period (14 Days)</span>
+                    </label>
+                </div>
+                
+
+                <button type="submit" 
+                    class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    Process Transaction
+                </button>
+            </form>
+            <div id="memberDetails" class="text-sm text-gray-600"></div>
+<div id="bookDetails" class="text-sm text-gray-600"></div>
+
+        </div>
+    </div><script>
+        // Handle member ID blur event
+// Handle member ID blur event
+let bookAllowed;
+document.getElementById("memberId").addEventListener("blur", function() {
+    let memberId = this.value;
+    fetch(`/get_member_details/${memberId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                document.getElementById("memberDetails").innerHTML = `Name: ${data.name}, Email: ${data.email}`;
+                bookAllowed = data.books_allowed;
+                console.log("Book Allowed:", bookAllowed);
+            }
+        })
+        .catch(error => console.error("Error fetching member details:", error));
+});
+ let bid;
+// Handle book ID blur event
+let bookAvailable;
+document.getElementById("bookIdTransaction").addEventListener("blur", function() {
+    let bookId = this.value;
+    fetch(`/get_book_details/${bookId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                bid = data.book_id;
+                document.getElementById("bookDetails").innerHTML = `Title: ${data.title}, Author: ${data.author}`;
+                bookAvailable = data.available;
+                console.log("Book Available:", bookAvailable);
+            }
+        })
+        .catch(error => console.error("Error fetching book details:", error));
+});
+
+// Handle form submission
+document.getElementById("transactionForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+    console.log(bid)
+    let transactionType = document.getElementById("transactionType").value;
+    let memberId = document.getElementById("memberId").value;
+    let bookId = document.getElementById("bookIdTransaction").value;
+    let extendPeriod = document.getElementById("extendPeriod").checked; // Check if extension is selected
+
+    try {
+        const response = await fetch(`/get_member_details/${memberId}`);
+        const data = await response.json();
+        
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+
+        if (data.books_issued >= data.loan_limit) {
+            alert("Book issue limit exceeded!");
+            return;
+        }
+
+    } catch (error) {
+        console.error("Error fetching member details:", error);
+        alert("Failed to validate member details.");
+        return;
+    }
+
+    if (!bookAvailable && transactionType === "issue") {
+        alert("This book is not available for issue!");
+        return;
+    }
+
+    // Set default due date (7 days) or extended due date (14 days)
+    let dueDate = null;
+    if (transactionType === "issue") {
+        const today = new Date();
+        let loanPeriod = extendPeriod ? 14 : 7; // 14 days if checked, else 7 days
+        const futureDate = new Date(today.getTime() + loanPeriod * 24 * 60 * 60 * 1000);
+        dueDate = futureDate.toISOString().slice(0, 10);
+    }
+
+    fetch("/process_transaction", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            transactionType: transactionType,
+            memberId: memberId,
+            bookId: bookId,
+            dueDate: dueDate
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.success || data.error);
+        if (data.success) {
+            document.getElementById("transactionForm").reset();
+        }
+    })
+    .catch(error => console.error("Error processing transaction:", error));
+});
+
+    </script>
+    
+    <script src="../js/auth.js"></script>
+    <script src="../js/librarian.js"></script>
+</body>
+</html>

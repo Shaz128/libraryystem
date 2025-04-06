@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-green-600 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">Library Management System</h1>
+            <div class="space-x-4">
+                <a href="{{ url_for('librariandashboard') }}" class="hover:text-green-200">Dashboard</a>
+                <a href="{{ url_for('additem') }}" class="hover:text-green-200">Add Books</a>
+                <a href="{{ url_for('member_registration') }}" class="hover:text-green-200">Add Member</a>
+                <a href="{{ url_for('viewmember') }}" class="hover:text-green-200">View Members</a>
+                <a href="{{ url_for('transaction') }}" class="hover:text-green-200">Issue/return</a>
+                <a href="{{ url_for('catlog') }}" class="hover:text-green-200">Catalog</a>
+                <a href="{{ url_for('data_manage') }}" class="hover:text-green-200">Data Management</a>   
+                <a href="{{ url_for('setting') }}" class="hover:text-green-200">Settings</a>
+                <a href="{{ url_for('logout') }}" class="hover:text-green-200">Logout</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mx-auto mt-6 p-6 bg-white rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold mb-4 text-green-600">Transactions</h2>
+        
+        <label for="transactionFilter" class="block text-lg font-medium text-gray-700">View Transactions:</label>
+        <select id="transactionFilter" class="w-full mt-2 mb-4 p-2 border border-gray-300 rounded-lg">
+            <option value="today">Today's Transactions</option>
+            <option value="last7days">Last 7 Days</option>
+            <option value="thismonth">This Month</option>
+        </select>
+        
+        <!-- Issued Section -->
+        <h3 class="text-xl font-bold mt-6 text-blue-600">Issued Transactions</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white mt-2" id="issuedTransactions">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="py-2 px-4 border">Member ID</th>
+                        <th class="py-2 px-4 border">Member Name</th>
+                        <th class="py-2 px-4 border">Book ID</th>
+                        <th class="py-2 px-4 border">Book Title</th>
+                        <th class="py-2 px-4 border">Issue Date</th>
+                        <th class="py-2 px-4 border">Due Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Issued transactions will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Returned Section -->
+        <h3 class="text-xl font-bold mt-6 text-green-600">Returned Transactions</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white mt-2" id="returnedTransactions">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="py-2 px-4 border">Member ID</th>
+                        <th class="py-2 px-4 border">Member Name</th>
+                        <th class="py-2 px-4 border">Book ID</th>
+                        <th class="py-2 px-4 border">Book Title</th>
+                        <th class="py-2 px-4 border">Issue Date</th>
+                        <th class="py-2 px-4 border">Return Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Returned transactions will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("/get_transactions")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const transactions = data.transactions;
+                        displayTransactions(transactions, "today"); // Default view
+                        setupFilter(transactions);
+                    }
+                })
+                .catch(error => console.error("Error fetching transactions:", error));
+        });
+
+        function setupFilter(transactions) {
+            document.getElementById("transactionFilter").addEventListener("change", function () {
+                const filterType = this.value;
+                displayTransactions(transactions, filterType);
+            });
+        }
+
+        function displayTransactions(transactions, filterType) {
+            const issuedTbody = document.querySelector("#issuedTransactions tbody");
+            const returnedTbody = document.querySelector("#returnedTransactions tbody");
+            issuedTbody.innerHTML = "";
+            returnedTbody.innerHTML = "";
+
+            const today = new Date();
+            const last7Days = new Date();
+            last7Days.setDate(today.getDate() - 7);
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            transactions.forEach(transaction => {
+                const issueDate = new Date(transaction.issue_date);
+                issueDate.setDate(issueDate.getDate() + 1);
+                const returnDate = transaction.return_date ? new Date(transaction.return_date) : null;
+                returnDate.setDate(returnDate.getDate()+1)
+                let includeTransaction = false;
+
+                if (filterType === "today") {
+                    if (isSameDay(issueDate, today) && !returnDate) {
+                        includeTransaction = "issued";
+                    } else if (returnDate && isSameDay(returnDate, today)) {
+                        includeTransaction = "returned";
+                    }
+                } else if (filterType === "last7days") {
+                    if (issueDate >= last7Days && !returnDate) {
+                        includeTransaction = "issued";
+                    } else if (returnDate && returnDate >= last7Days) {
+                        includeTransaction = "returned";
+                    }
+                } else if (filterType === "thismonth") {
+                    if (issueDate >= firstDayOfMonth && !returnDate) {
+                        includeTransaction = "issued";
+                    } else if (returnDate && returnDate >= firstDayOfMonth) {
+                        includeTransaction = "returned";
+                    }
+                }
+
+                if (includeTransaction === "issued") {
+                    issuedTbody.innerHTML += `
+                        <tr>
+                            <td class="py-2 px-4 border">${transaction.transaction_id}</td>
+                            <td class="py-2 px-4 border">${transaction.member_name}</td>
+                            <td class="py-2 px-4 border">${transaction.book_id}</td>
+                            <td class="py-2 px-4 border">${transaction.book_title}</td>
+                            <td class="py-2 px-4 border">${transaction.issue_date}</td>
+                            <td class="py-2 px-4 border">${transaction.due_date}</td>
+                        </tr>
+                    `;
+                } else if (includeTransaction === "returned") {
+                    returnedTbody.innerHTML += `
+                        <tr>
+                            <td class="py-2 px-4 border">${transaction.transaction_id}</td>
+                            <td class="py-2 px-4 border">${transaction.member_name}</td>
+                            <td class="py-2 px-4 border">${transaction.book_id}</td>
+                            <td class="py-2 px-4 border">${transaction.book_title}</td>
+                            <td class="py-2 px-4 border">${transaction.issue_date}</td>
+                            <td class="py-2 px-4 border">${transaction.return_date}</td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
+        function isSameDay(date1, date2) {
+            console.log(date1,date2)
+            return date1.getFullYear() === date2.getFullYear() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getDate() === date2.getDate();
+                   
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librarian Dashboard - Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-green-600 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">Library Management System</h1>
+            <div class="space-x-4">
+                <a href="{{ url_for('librariandashboard') }}" class="hover:text-green-200">Dashboard</a>
+                <a href="{{ url_for('additem') }}" class="hover:text-green-200">Add Books</a>
+                <a href="{{ url_for('member_registration') }}" class="hover:text-green-200">Add Member</a>
+                <a href="{{ url_for('viewmember') }}" class="hover:text-green-200">View Members</a>
+                <a href="{{ url_for('transaction') }}" class="hover:text-green-200">Issue/return</a>
+                <a href="{{ url_for('catlog') }}" class="hover:text-green-200">Catlog</a>
+                <a href="{{ url_for('data_manage') }}" class="hover:text-green-200">Data Management</a>                              
+                <a href="{{ url_for('setting') }}" class="hover:text-green-200">setting</a>
+                
+                <a href="{{ url_for('logout') }}" class="hover:text-green-200">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6" id="dataImportExportSection">
+        <h2 class="text-2xl font-semibold mb-4 text-green-600">Import / Export Data</h2>
+        
+        <div class="grid grid-cols-2 gap-4">
+            <!-- Export buttons -->
+            <button onclick="window.location.href='/export/prefix'" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg">
+                Export Prefix Data
+            </button>
+            <button onclick="window.location.href='/export/members'" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg">
+                Export Member Data
+            </button>
+            <button onclick="window.location.href='/export/books'" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg">
+                Export Book Data
+            </button>
+    
+            <!-- Import form -->
+            <form id="importForm" class="col-span-2" enctype="multipart/form-data">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Import Excel File</label>
+                <input type="file" name="file" required class="mb-2" />
+                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg w-full">
+                    Import All Data
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+    document.getElementById("importForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const res = await fetch('/import', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert("✅ Data imported successfully!");
+        } else {
+            alert("❌ Error: " + data.error);
+        }
+    });
+    </script>
+    
+
+
+        <script>
+       
+   
+        </script>
+        
+    <script src="../js/auth.js"></script>
+    <script src="../js/librarian.js"></script>
+    <script src="../js/settings.js"></script>
+</body>
+</html>
